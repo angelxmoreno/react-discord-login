@@ -9,7 +9,7 @@
         "oauth2",
         "login"
     ],
-    "main": "index.js",
+    "main": "dist/index.js",
     "repository": "git@github.com:angelxmoreno/react-discord-login.git",
     "author": "Angel S. Moreno <angelxmoreno@gmail.com>",
     "license": "MIT",

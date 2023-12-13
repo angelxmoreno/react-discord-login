@@ -19,8 +19,6 @@
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
-        "types": [
-            "bun-types" // add Bun global
-        ]
+        "types": ["bun-types", "web"]
     }
 }

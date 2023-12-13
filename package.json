@@ -98,7 +98,7 @@
         "printWidth": 120
     },
     "lint-staged": {
-        "*.{ts}": "eslint --fix",
+        "*.ts": "eslint --fix",
         "*.{json,md}": "prettier --write"
     },
     "commitlint": {

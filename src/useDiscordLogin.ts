@@ -1,35 +1,46 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { UseDiscordLogin } from './DiscordLoginTypes';
-import { fetchUser, generateUrl, getCallbackResponse, normalizeDiscordConfig } from './utils';
+import { fetchUser, generateUrl, getCallbackResponse, normalizeDiscordConfig, shouldHandleCallback } from './utils';
 
 const useDiscordLogin: UseDiscordLogin = ({ onSuccess, onFailure, ...options }) => {
     const [isLoading, setLoading] = useState<boolean>(false);
     const discordConfig = normalizeDiscordConfig(options);
-    const url = window.location.hash;
 
-    useEffect(() => {
+    const handleCallback = useCallback(async () => {
         const { type, error, token, code } = getCallbackResponse();
         if (type !== null) {
             setLoading(true);
+            const url = new URL(window.location.origin);
+            url.search = '';
+            url.hash = '';
+            history.replaceState(null, '', url);
         }
         if (error && onFailure) {
-            onFailure(error);
+            await onFailure(error);
         }
         if (code && onSuccess) {
-            onSuccess(code);
+            await onSuccess(code);
         }
 
         if (token && onSuccess) {
-            fetchUser(token).then(user => {
-                onSuccess({
-                    ...token,
-                    user,
-                });
+            const user = await fetchUser(token);
+            await onSuccess({
+                ...token,
+                user,
             });
         }
-        setLoading(false);
-    }, [url]);
+        if (type !== null) {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (shouldHandleCallback()) {
+            handleCallback().catch(console.error);
+        }
+    }, []);
+
     const buildUrl = () => generateUrl(discordConfig);
     return {
         buildUrl,

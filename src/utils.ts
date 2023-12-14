@@ -34,13 +34,26 @@ export const generateUrl = ({ clientId, redirectUri, responseType, scopes }: Dis
     return 'https://discord.com/api/oauth2/authorize?' + searchParams.toString();
 };
 
-export const getCallbackResponse: GetCallbackResponseFunc = () => {
-    const fragment = new URLSearchParams(window.location.hash.slice(1));
+const getQueryAndHash = (): URLSearchParams => {
+    const params = new URLSearchParams();
+
     const query = new URLSearchParams(window.location.search);
-    const error = fragment.get('error');
-    const error_description = fragment.get('error_description');
-    const token_type = fragment.get('token_type');
-    const code = query.get('code');
+    query.forEach((value, key) => {
+        params.set(key, value);
+    });
+
+    const fragment = new URLSearchParams(window.location.hash.slice(1));
+    fragment.forEach((value, key) => {
+        params.set(key, value);
+    });
+    return params;
+};
+export const getCallbackResponse: GetCallbackResponseFunc = () => {
+    const params = getQueryAndHash();
+    const error = params.get('error');
+    const error_description = params.get('error_description');
+    const token_type = params.get('token_type');
+    const code = params.get('code');
 
     if (error || error_description) {
         return {
@@ -57,9 +70,9 @@ export const getCallbackResponse: GetCallbackResponseFunc = () => {
             type: 'token',
             token: {
                 token_type: String(token_type),
-                access_token: String(fragment.get('access_token')),
-                expires_in: Number(fragment.get('expires_in')),
-                scope: String(fragment.get('scope')).split(' '),
+                access_token: String(params.get('access_token')),
+                expires_in: Number(params.get('expires_in')),
+                scope: String(params.get('scope')).split(' '),
             },
         };
     }
@@ -85,4 +98,11 @@ export const fetchUser = async (token: TokenResponse) => {
         },
     });
     return (await result.json()) as User;
+};
+
+export const shouldHandleCallback = (): boolean => {
+    const params = getQueryAndHash();
+    const keys = Array.from(params.keys());
+    const targets = ['code', 'error', 'token_type'];
+    return targets.some(target => keys.includes(target));
 };

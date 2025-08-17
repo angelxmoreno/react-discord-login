@@ -15,10 +15,19 @@ bun add react-discord-login
 ## Usage
 
 ```tsx
-import { useDiscordLogin, UseDiscordLoginParams } from 'react-discord-login';
+import { 
+    useDiscordLogin, 
+    type DiscordLoginParams,
+    type CodeResponse,
+    type TokenResponse,
+    type ErrorResponse 
+} from 'react-discord-login';
 
 const YourComponent = () => {
-    const discordLoginParams: UseDiscordLoginParams = {
+    const discordLoginParams: DiscordLoginParams & {
+        onSuccess?: (response: CodeResponse | TokenResponse) => void;
+        onFailure?: (error: ErrorResponse) => void;
+    } = {
         clientId: 'YOUR_DISCORD_CLIENT_ID',
         redirectUri: 'YOUR_REDIRECT_URI',
         responseType: 'token', // or 'code'
@@ -75,18 +84,55 @@ An object with the following properties:
 
 ## Types
 
-Several TypeScript types are provided to enhance code quality and development experience:
+All TypeScript types are exported to enhance code quality and development experience:
 
--   **DiscordLoginParams**
--   **DiscordLoginConfig**
--   **User**
--   **ErrorResponse**
--   **CodeResponse**
--   **TokenResponse**
--   **UseDiscordLoginParams**
--   **OnSuccessFunc**
--   **OnFailureFunc**
--   **GetCallbackResponseFunc**
+### Core Types
+-   **DiscordLoginParams** - Configuration parameters for Discord OAuth2
+-   **DiscordLoginConfig** - Normalized configuration (internal use)
+-   **User** - Discord user data structure
+
+### Response Types  
+-   **ErrorResponse** - OAuth2 error response structure
+-   **CodeResponse** - Authorization code response (for 'code' flow)
+-   **TokenResponse** - Access token response (for 'token' flow)
+
+### Callback Types
+-   **OnSuccessFunc** - Type for success callback function
+-   **OnFailureFunc** - Type for failure callback function
+
+### Hook Types
+-   **UseDiscordLogin** - Type definition for the main hook
+-   **CallbackResponse** - Internal callback response structure
+
+### Example with Types
+
+```tsx
+import { 
+    useDiscordLogin,
+    type OnSuccessFunc,
+    type OnFailureFunc,
+    type TokenResponse,
+    type ErrorResponse 
+} from 'react-discord-login';
+
+const handleSuccess: OnSuccessFunc = (response) => {
+    if ('access_token' in response) {
+        // Handle token response
+        const tokenResponse = response as TokenResponse;
+        console.log('Access token:', tokenResponse.access_token);
+        if (tokenResponse.user) {
+            console.log('User:', tokenResponse.user);
+        }
+    } else {
+        // Handle code response  
+        console.log('Authorization code:', response.code);
+    }
+};
+
+const handleFailure: OnFailureFunc = (error: ErrorResponse) => {
+    console.error('Login failed:', error.error, error.description);
+};
+```
 
 ## License
 

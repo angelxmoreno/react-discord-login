@@ -1,4 +1,19 @@
-import { DiscordLoginConfig, DiscordLoginParams } from './DiscordLoginTypes';
 import useDiscordLogin from './useDiscordLogin';
 
-export { useDiscordLogin, DiscordLoginParams, DiscordLoginConfig };
+// Export the hook as both default and named export
+export default useDiscordLogin;
+export { useDiscordLogin };
+
+// Export types
+export type {
+    CallbackResponse,
+    CodeResponse,
+    DiscordLoginConfig,
+    DiscordLoginParams,
+    ErrorResponse,
+    OnFailureFunc,
+    OnSuccessFunc,
+    TokenResponse,
+    UseDiscordLogin,
+    User,
+} from './DiscordLoginTypes';

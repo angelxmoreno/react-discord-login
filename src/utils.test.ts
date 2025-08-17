@@ -1,10 +1,17 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import type { TokenResponse } from './DiscordLoginTypes';
-import { fetchUser } from './utils';
 
-// Create a simplified mock for fetch
+// Import the module to mock after setting up the mock
 const mockFetch = mock();
-global.fetch = mockFetch as unknown as typeof fetch;
+
+// Set up the fetch mock before importing utils
+Object.defineProperty(globalThis, 'fetch', {
+    value: mockFetch,
+    writable: true,
+});
+
+// Import fetchUser after setting up mocks
+import { fetchUser } from './utils';
 
 describe('fetchUser', () => {
     const validToken: TokenResponse = {

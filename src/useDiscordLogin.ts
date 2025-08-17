@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { UseDiscordLogin } from './DiscordLoginTypes';
+import type { UseDiscordLogin } from './DiscordLoginTypes';
 import { fetchUser, generateUrl, getCallbackResponse, normalizeDiscordConfig, shouldHandleCallback } from './utils';
 
 const useDiscordLogin: UseDiscordLogin = ({ onSuccess, onFailure, ...options }) => {
@@ -33,13 +33,13 @@ const useDiscordLogin: UseDiscordLogin = ({ onSuccess, onFailure, ...options }) 
         if (type !== null) {
             setLoading(false);
         }
-    }, []);
+    }, [onFailure, onSuccess]);
 
     useEffect(() => {
         if (shouldHandleCallback()) {
             handleCallback().catch(console.error);
         }
-    }, []);
+    }, [handleCallback]);
 
     const buildUrl = () => generateUrl(discordConfig);
     return {

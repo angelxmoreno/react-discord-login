@@ -1,4 +1,4 @@
-import { DiscordLoginParams, DiscordLoginConfig } from './DiscordLoginTypes';
+import { DiscordLoginConfig, DiscordLoginParams } from './DiscordLoginTypes';
 import useDiscordLogin from './useDiscordLogin';
 
 export { useDiscordLogin, DiscordLoginParams, DiscordLoginConfig };

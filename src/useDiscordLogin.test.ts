@@ -146,12 +146,7 @@ describe('useDiscordLogin hook improvements', () => {
         );
         mockFetchUser.mockRejectedValue(networkError);
 
-        try {
-            await mockFetchUser(tokenResponse);
-        } catch (error) {
-            expect(error).toBeInstanceOf(Error);
-            expect((error as Error).message).toContain('Discord API responded with status: 401');
-        }
+        await expect(mockFetchUser(tokenResponse)).rejects.toThrow(/Discord API responded with status: 401/);
     });
 
     it('should verify cleanup functionality exists', async () => {

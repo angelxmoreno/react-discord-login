@@ -69,20 +69,42 @@ const useDiscordLogin: UseDiscordLogin = ({ onSuccess, onFailure, clientId, redi
     }, [onFailure, onSuccess]);
 
     useEffect(() => {
-        if (shouldHandleCallback()) {
-            handleCallback().catch((error) => {
-                console.error('Discord login callback failed:', error);
-                if (onFailure && isMountedRef.current) {
-                    const failureResult = onFailure({
-                        error: 'callback_error',
-                        description: error instanceof Error ? error.message : 'Unknown callback error',
-                    });
-                    if (failureResult instanceof Promise) {
-                        failureResult.catch(console.error);
+        // Define a single guarded async runner closure
+        const callbackRunner = async () => {
+            if (shouldHandleCallback()) {
+                try {
+                    await handleCallback();
+                } catch (error) {
+                    console.error('Discord login callback failed:', error);
+                    if (onFailure && isMountedRef.current) {
+                        await onFailure({
+                            error: 'callback_error',
+                            description: error instanceof Error ? error.message : 'Unknown callback error',
+                        });
                     }
                 }
-            });
+            }
+        };
+
+        // Run on mount
+        callbackRunner();
+
+        // Add event listeners for URL changes
+        const handleHashChange = () => callbackRunner();
+        const handlePopState = () => callbackRunner();
+
+        if (typeof window !== 'undefined') {
+            window.addEventListener('hashchange', handleHashChange);
+            window.addEventListener('popstate', handlePopState);
         }
+
+        // Cleanup listeners
+        return () => {
+            if (typeof window !== 'undefined') {
+                window.removeEventListener('hashchange', handleHashChange);
+                window.removeEventListener('popstate', handlePopState);
+            }
+        };
     }, [handleCallback, onFailure]);
 
     useEffect(() => {

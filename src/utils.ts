@@ -1,4 +1,4 @@
-import {
+import type {
     DiscordLoginConfig,
     DiscordLoginParams,
     GetCallbackResponseFunc,
@@ -31,7 +31,7 @@ export const generateUrl = ({ clientId, redirectUri, responseType, scopes }: Dis
     searchParams.append('redirect_uri', redirectUri);
     searchParams.append('scope', scopes.join(' '));
 
-    return 'https://discord.com/api/oauth2/authorize?' + searchParams.toString();
+    return `https://discord.com/api/oauth2/authorize?${searchParams.toString()}`;
 };
 
 const getQueryAndHash = (): URLSearchParams => {
@@ -104,5 +104,5 @@ export const shouldHandleCallback = (): boolean => {
     const params = getQueryAndHash();
     const keys = Array.from(params.keys());
     const targets = ['code', 'error', 'token_type'];
-    return targets.some(target => keys.includes(target));
+    return targets.some((target) => keys.includes(target));
 };

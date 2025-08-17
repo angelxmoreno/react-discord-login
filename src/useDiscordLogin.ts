@@ -28,10 +28,45 @@ const useDiscordLogin: UseDiscordLogin = ({ onSuccess, onFailure, clientId, redi
                 setLoading(true);
                 try {
                     if (typeof window !== 'undefined' && typeof history !== 'undefined') {
-                        const url = new URL(window.location.origin);
-                        url.search = '';
-                        url.hash = '';
-                        history.replaceState(null, '', url);
+                        // OAuth parameters to remove
+                        const oauthParams = [
+                            'code',
+                            'state',
+                            'error',
+                            'error_description',
+                            'access_token',
+                            'token_type',
+                            'expires_in',
+                            'scope',
+                        ];
+
+                        // Preserve current pathname
+                        const currentPathname = window.location.pathname;
+
+                        // Clean up search params
+                        const searchParams = new URLSearchParams(window.location.search);
+                        for (const param of oauthParams) {
+                            searchParams.delete(param);
+                        }
+                        const sanitizedSearch = searchParams.toString();
+
+                        // Clean up hash params (Discord OAuth can use hash fragments)
+                        let sanitizedHash = '';
+                        if (window.location.hash) {
+                            const hashContent = window.location.hash.substring(1); // Remove leading #
+                            const hashParams = new URLSearchParams(hashContent);
+                            for (const param of oauthParams) {
+                                hashParams.delete(param);
+                            }
+                            const cleanHashParams = hashParams.toString();
+                            sanitizedHash = cleanHashParams ? `#${cleanHashParams}` : '';
+                        }
+
+                        // Reconstruct URL preserving non-OAuth data
+                        const reconstructedUrl =
+                            currentPathname + (sanitizedSearch ? `?${sanitizedSearch}` : '') + sanitizedHash;
+
+                        history.replaceState(null, '', reconstructedUrl);
                     }
                 } catch {
                     // noop: environment lacks URL/history support

@@ -91,13 +91,26 @@ export const getCallbackResponse: GetCallbackResponseFunc = () => {
     };
 };
 
-export const fetchUser = async (token: TokenResponse) => {
-    const result = await fetch('https://discord.com/api/users/@me', {
-        headers: {
-            authorization: `${token.token_type} ${token.access_token}`,
-        },
-    });
-    return (await result.json()) as User;
+export const fetchUser = async (token: TokenResponse): Promise<User> => {
+    try {
+        const result = await fetch('https://discord.com/api/users/@me', {
+            headers: {
+                authorization: `${token.token_type} ${token.access_token}`,
+            },
+        });
+
+        if (!result.ok) {
+            throw new Error(`Discord API responded with status: ${result.status} ${result.statusText}`);
+        }
+
+        const userData = await result.json();
+        return userData as User;
+    } catch (error) {
+        if (error instanceof Error) {
+            throw new Error(`Failed to fetch user data: ${error.message}`);
+        }
+        throw new Error('Failed to fetch user data: Unknown error occurred');
+    }
 };
 
 export const shouldHandleCallback = (): boolean => {

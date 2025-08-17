@@ -28,6 +28,8 @@
         "lint": "biome check .",
         "lint:fix": "biome check --write",
         "typecheck": "tsc --noEmit",
+        "test": "bun test",
+        "check": "bun run lint:fix && bun run typecheck && bun run test && bun run build && bun run test",
         "postinstall": "lefthook install"
     },
     "devDependencies": {

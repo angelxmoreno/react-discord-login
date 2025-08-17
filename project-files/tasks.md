@@ -250,9 +250,9 @@ This indicates good code maintenance practices, with no outstanding technical de
 **Overall Score: 8.5/10**
 
 - **Code Quality**: 9/10 (excellent structure, types, tooling)
-- **Error Handling**: 6/10 (basic but incomplete)
+- **Error Handling**: 8/10 (significantly improved with comprehensive fetchUser error handling)
 - **Documentation**: 7/10 (types documented, usage needs improvement)
-- **Testing**: N/A (no tests found)
+- **Testing**: 7/10 (comprehensive unit tests added for `fetchUser`; add coverage for hooks like `useDiscordLogin`)
 - **Performance**: 8/10 (efficient, room for optimization)
 
 ## Conclusion

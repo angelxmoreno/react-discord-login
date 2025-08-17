@@ -43,7 +43,7 @@ export interface TokenResponse {
 
 export type OnFailureFunc = (error: ErrorResponse) => Promise<void> | void;
 export type OnSuccessFunc = (response: CodeResponse | TokenResponse) => Promise<void> | void;
-type UseDiscordLoginParams = DiscordLoginParams & {
+export type UseDiscordLoginParams = DiscordLoginParams & {
     onSuccess?: OnSuccessFunc;
     onFailure?: OnFailureFunc;
 };

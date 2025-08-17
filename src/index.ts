@@ -15,5 +15,6 @@ export type {
     OnSuccessFunc,
     TokenResponse,
     UseDiscordLogin,
+    UseDiscordLoginParams,
     User,
 } from './DiscordLoginTypes';

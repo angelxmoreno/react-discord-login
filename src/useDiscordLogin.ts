@@ -1,25 +1,42 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { UseDiscordLogin } from './DiscordLoginTypes';
 import { fetchUser, generateUrl, getCallbackResponse, normalizeDiscordConfig, shouldHandleCallback } from './utils';
 
-const useDiscordLogin: UseDiscordLogin = ({ onSuccess, onFailure, ...options }) => {
+const useDiscordLogin: UseDiscordLogin = ({ onSuccess, onFailure, clientId, redirectUri, responseType, scopes }) => {
     const [isLoading, setLoading] = useState<boolean>(false);
     const isMountedRef = useRef<boolean>(true);
-    const discordConfig = normalizeDiscordConfig(options);
+    const discordConfig = useMemo(
+        () => normalizeDiscordConfig({ clientId, redirectUri, responseType, scopes }),
+        [clientId, redirectUri, responseType, scopes]
+    );
 
     const handleCallback = useCallback(async () => {
-        const { type, error, token, code } = getCallbackResponse();
-
-        if (type !== null && isMountedRef.current) {
-            setLoading(true);
-            const url = new URL(window.location.origin);
-            url.search = '';
-            url.hash = '';
-            history.replaceState(null, '', url);
-        }
+        let type: null | 'error' | 'token' | 'code' = null;
+        let error: ReturnType<typeof getCallbackResponse>['error'];
+        let token: ReturnType<typeof getCallbackResponse>['token'];
+        let code: ReturnType<typeof getCallbackResponse>['code'];
 
         try {
+            const response = getCallbackResponse();
+            type = response.type;
+            error = response.error;
+            token = response.token;
+            code = response.code;
+
+            if (type !== null && isMountedRef.current) {
+                setLoading(true);
+                try {
+                    if (typeof window !== 'undefined' && typeof history !== 'undefined') {
+                        const url = new URL(window.location.origin);
+                        url.search = '';
+                        url.hash = '';
+                        history.replaceState(null, '', url);
+                    }
+                } catch {
+                    // noop: environment lacks URL/history support
+                }
+            }
             if (error && onFailure && isMountedRef.current) {
                 await onFailure(error);
             }

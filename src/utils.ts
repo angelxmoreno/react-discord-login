@@ -32,7 +32,17 @@ export const normalizeDiscordConfig = ({
     responseType: type,
     scopes: scopesArray,
 }: DiscordLoginParams): DiscordLoginConfig => {
-    const redirectUri = uri || window.location.origin;
+    const hasWindow = typeof window !== 'undefined' && typeof window.location !== 'undefined';
+
+    let redirectUri: string;
+    if (uri) {
+        redirectUri = uri;
+    } else if (hasWindow) {
+        redirectUri = window.location.origin;
+    } else {
+        throw new Error('redirectUri must be provided when window is not available (SSR environment)');
+    }
+
     const responseType = type || 'code';
     const scopes = scopesArray || ['identify'];
 
@@ -90,15 +100,23 @@ export const generateUrl = ({ clientId, redirectUri, responseType, scopes }: Dis
 const getQueryAndHash = (): URLSearchParams => {
     const params = new URLSearchParams();
 
+    // Return empty URLSearchParams during SSR
+    if (typeof window === 'undefined') {
+        return params;
+    }
+
+    // Parse query parameters first
     const query = new URLSearchParams(window.location.search);
     query.forEach((value, key) => {
         params.set(key, value);
     });
 
+    // Parse hash fragment parameters (these override query values if duplicate keys)
     const fragment = new URLSearchParams(window.location.hash.slice(1));
     fragment.forEach((value, key) => {
         params.set(key, value);
     });
+
     return params;
 };
 /**
@@ -148,20 +166,35 @@ export const getCallbackResponse: GetCallbackResponseFunc = () => {
         return {
             type: 'error',
             error: {
-                error: String(error),
-                description: String(error_description),
+                error: error ?? 'unknown_error',
+                description: error_description ?? '',
             },
         };
     }
 
     if (token_type) {
+        const access_token = params.get('access_token');
+        const expires_in = params.get('expires_in');
+        const scope = params.get('scope');
+
+        // Validate that access_token exists for token responses
+        if (!access_token) {
+            return {
+                type: 'error',
+                error: {
+                    error: 'invalid_token_response',
+                    description: 'Token response is missing required access_token parameter',
+                },
+            };
+        }
+
         return {
             type: 'token',
             token: {
-                token_type: String(token_type),
-                access_token: String(params.get('access_token')),
-                expires_in: Number(params.get('expires_in')),
-                scope: String(params.get('scope')).split(' '),
+                token_type,
+                access_token,
+                expires_in: expires_in ? Number(expires_in) : 0,
+                scope: scope ? scope.split(' ') : [],
             },
         };
     }
@@ -170,7 +203,7 @@ export const getCallbackResponse: GetCallbackResponseFunc = () => {
         return {
             type: 'code',
             code: {
-                code: String(code),
+                code,
             },
         };
     }

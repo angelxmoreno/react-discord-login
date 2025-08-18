@@ -1,6 +1,6 @@
 {
     "name": "react-discord-login",
-    "version": "2.1.0",
+    "version": "2.2.0",
     "description": "A React component for easy integration of 'Sign in with Discord' functionality into web applications",
     "keywords": [
         "react",

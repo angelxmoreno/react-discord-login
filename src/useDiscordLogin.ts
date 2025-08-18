@@ -1,47 +1,155 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { UseDiscordLogin } from './DiscordLoginTypes';
 import { fetchUser, generateUrl, getCallbackResponse, normalizeDiscordConfig, shouldHandleCallback } from './utils';
 
-const useDiscordLogin: UseDiscordLogin = ({ onSuccess, onFailure, ...options }) => {
+const useDiscordLogin: UseDiscordLogin = ({ onSuccess, onFailure, clientId, redirectUri, responseType, scopes }) => {
     const [isLoading, setLoading] = useState<boolean>(false);
-    const discordConfig = normalizeDiscordConfig(options);
+    const isMountedRef = useRef<boolean>(true);
+    const discordConfig = useMemo(
+        () => normalizeDiscordConfig({ clientId, redirectUri, responseType, scopes }),
+        [clientId, redirectUri, responseType, scopes]
+    );
 
     const handleCallback = useCallback(async () => {
-        const { type, error, token, code } = getCallbackResponse();
-        if (type !== null) {
-            setLoading(true);
-            const url = new URL(window.location.origin);
-            url.search = '';
-            url.hash = '';
-            history.replaceState(null, '', url);
-        }
-        if (error && onFailure) {
-            await onFailure(error);
-        }
-        if (code && onSuccess) {
-            await onSuccess(code);
-        }
+        let type: null | 'error' | 'token' | 'code' = null;
+        let error: ReturnType<typeof getCallbackResponse>['error'];
+        let token: ReturnType<typeof getCallbackResponse>['token'];
+        let code: ReturnType<typeof getCallbackResponse>['code'];
 
-        if (token && onSuccess) {
-            const user = await fetchUser(token);
-            await onSuccess({
-                ...token,
-                user,
-            });
-        }
-        if (type !== null) {
-            setLoading(false);
+        try {
+            const response = getCallbackResponse();
+            type = response.type;
+            error = response.error;
+            token = response.token;
+            code = response.code;
+
+            if (type !== null && isMountedRef.current) {
+                setLoading(true);
+                try {
+                    if (typeof window !== 'undefined' && typeof history !== 'undefined') {
+                        // OAuth parameters to remove
+                        const oauthParams = [
+                            'code',
+                            'state',
+                            'error',
+                            'error_description',
+                            'access_token',
+                            'token_type',
+                            'expires_in',
+                            'scope',
+                        ];
+
+                        // Preserve current pathname
+                        const currentPathname = window.location.pathname;
+
+                        // Clean up search params
+                        const searchParams = new URLSearchParams(window.location.search);
+                        for (const param of oauthParams) {
+                            searchParams.delete(param);
+                        }
+                        const sanitizedSearch = searchParams.toString();
+
+                        // Clean up hash params (Discord OAuth can use hash fragments)
+                        let sanitizedHash = '';
+                        if (window.location.hash) {
+                            const hashContent = window.location.hash.substring(1); // Remove leading #
+                            const hashParams = new URLSearchParams(hashContent);
+                            for (const param of oauthParams) {
+                                hashParams.delete(param);
+                            }
+                            const cleanHashParams = hashParams.toString();
+                            sanitizedHash = cleanHashParams ? `#${cleanHashParams}` : '';
+                        }
+
+                        // Reconstruct URL preserving non-OAuth data
+                        const reconstructedUrl =
+                            currentPathname + (sanitizedSearch ? `?${sanitizedSearch}` : '') + sanitizedHash;
+
+                        history.replaceState(null, '', reconstructedUrl);
+                    }
+                } catch {
+                    // noop: environment lacks URL/history support
+                }
+            }
+            if (error && onFailure && isMountedRef.current) {
+                await onFailure(error);
+            }
+
+            if (code && onSuccess && isMountedRef.current) {
+                await onSuccess(code);
+            }
+
+            if (token && onSuccess && isMountedRef.current) {
+                const user = await fetchUser(token);
+                if (isMountedRef.current) {
+                    await onSuccess({
+                        ...token,
+                        user,
+                    });
+                }
+            }
+        } catch (callbackError) {
+            if (onFailure && isMountedRef.current) {
+                await onFailure({
+                    error: 'callback_error',
+                    description: callbackError instanceof Error ? callbackError.message : 'Unknown callback error',
+                });
+            }
+        } finally {
+            if (type !== null && isMountedRef.current) {
+                setLoading(false);
+            }
         }
     }, [onFailure, onSuccess]);
 
     useEffect(() => {
-        if (shouldHandleCallback()) {
-            handleCallback().catch(console.error);
-        }
-    }, [handleCallback]);
+        // Define a single guarded async runner closure
+        const callbackRunner = async () => {
+            if (shouldHandleCallback()) {
+                try {
+                    await handleCallback();
+                } catch (error) {
+                    console.error('Discord login callback failed:', error);
+                    if (onFailure && isMountedRef.current) {
+                        await onFailure({
+                            error: 'callback_error',
+                            description: error instanceof Error ? error.message : 'Unknown callback error',
+                        });
+                    }
+                }
+            }
+        };
 
-    const buildUrl = () => generateUrl(discordConfig);
+        // Run on mount
+        callbackRunner();
+
+        // Add event listeners for URL changes
+        const handleHashChange = () => callbackRunner();
+        const handlePopState = () => callbackRunner();
+
+        if (typeof window !== 'undefined') {
+            window.addEventListener('hashchange', handleHashChange);
+            window.addEventListener('popstate', handlePopState);
+        }
+
+        // Cleanup listeners
+        return () => {
+            if (typeof window !== 'undefined') {
+                window.removeEventListener('hashchange', handleHashChange);
+                window.removeEventListener('popstate', handlePopState);
+            }
+        };
+    }, [handleCallback, onFailure]);
+
+    useEffect(() => {
+        return () => {
+            isMountedRef.current = false;
+        };
+    }, []);
+
+    const buildUrl = useCallback(() => generateUrl(discordConfig), [discordConfig]);
+
     return {
         buildUrl,
         isLoading,

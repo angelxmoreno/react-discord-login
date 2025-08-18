@@ -247,13 +247,13 @@ This indicates good code maintenance practices, with no outstanding technical de
 1. ✅ **Add comprehensive JSDoc documentation** - complete API documentation with examples and usage patterns
 
 ### Phase 3: Enhancement Features (Low Impact) - **GITHUB REQUESTED**
-1. **Popup OAuth flow** (Issue #9) - alternative to full page redirect
-2. **Release-it improvements** (Issue #11) - enhance config with schema, npm publishing, hooks, safety checks
-3. **Documentation improvements** (Issues #10, #12, #13) - demo, setup guide, contributing
-4. Add performance optimizations and SSR compatibility
+1. **Release-it improvements** (Issue #11) - enhance config with schema, npm publishing, hooks, safety checks
+2. **Documentation improvements** (Issues #10, #12, #13) - demo, setup guide, contributing
+3. Add performance optimizations and SSR compatibility
 
-### Phase 4: Testing Infrastructure
-1. ⏭️ **Fix fetch mocking in CI** - resolve happy-dom interference (8 tests temporarily skipped)
+### Phase 4: Advanced Features & Testing Infrastructure
+1. **Popup OAuth flow** (Issue #9) - alternative to full page redirect
+2. ⏭️ **Fix fetch mocking in CI** - resolve happy-dom interference (8 tests temporarily skipped)
 
 ## Technical Debt Assessment
 

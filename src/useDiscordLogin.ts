@@ -3,6 +3,63 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { UseDiscordLogin } from './DiscordLoginTypes';
 import { fetchUser, generateUrl, getCallbackResponse, normalizeDiscordConfig, shouldHandleCallback } from './utils';
 
+/**
+ * React hook for Discord OAuth2 authentication flow.
+ *
+ * Provides a complete OAuth2 integration with Discord's API, supporting both 'code' and 'token' flows.
+ * Handles URL callback processing, user data fetching, error handling, and navigation state preservation.
+ *
+ * @example
+ * ```tsx
+ * // Basic usage with code flow
+ * const { buildUrl, isLoading } = useDiscordLogin({
+ *   clientId: 'your-discord-client-id',
+ *   redirectUri: 'https://yourapp.com/callback',
+ *   responseType: 'code',
+ *   scopes: ['identify', 'email'],
+ *   onSuccess: (response) => {
+ *     console.log('OAuth success:', response);
+ *   },
+ *   onFailure: (error) => {
+ *     console.error('OAuth failed:', error);
+ *   }
+ * });
+ *
+ * // Token flow with user data
+ * const { buildUrl, isLoading } = useDiscordLogin({
+ *   clientId: 'your-discord-client-id',
+ *   responseType: 'token',
+ *   scopes: ['identify'],
+ *   onSuccess: (response) => {
+ *     // response includes user data for token flow
+ *     console.log('User:', response.user);
+ *   }
+ * });
+ * ```
+ *
+ * @param params - Configuration object for Discord OAuth2
+ * @param params.clientId - Discord application client ID (18-19 digit snowflake)
+ * @param params.redirectUri - OAuth2 redirect URI (defaults to current origin)
+ * @param params.responseType - OAuth2 response type: 'code' or 'token' (defaults to 'code')
+ * @param params.scopes - Discord OAuth2 scopes array (defaults to ['identify'])
+ * @param params.onSuccess - Callback for successful OAuth2 completion
+ * @param params.onFailure - Callback for OAuth2 errors
+ *
+ * @returns Hook return object
+ * @returns returns.buildUrl - Function to generate Discord OAuth2 authorization URL
+ * @returns returns.isLoading - Boolean indicating if OAuth2 callback is being processed
+ *
+ * @remarks
+ * This hook automatically:
+ * - Detects OAuth2 callbacks in the current URL (query params or hash fragments)
+ * - Processes callbacks on mount and URL changes (hashchange/popstate events)
+ * - Fetches user data for token flow responses
+ * - Cleans OAuth2 parameters from URL while preserving navigation state
+ * - Prevents memory leaks with proper cleanup and mount tracking
+ * - Works in SSR environments with safe window/history access
+ *
+ * @since 2.1.0
+ */
 const useDiscordLogin: UseDiscordLogin = ({ onSuccess, onFailure, clientId, redirectUri, responseType, scopes }) => {
     const [isLoading, setLoading] = useState<boolean>(false);
     const isMountedRef = useRef<boolean>(true);

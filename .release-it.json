@@ -1,8 +1,24 @@
 {
+    "$schema": "https://unpkg.com/release-it@19/schema/release-it.json",
     "git": {
-        "commitMessage": "chore: release v${version}"
+        "commitMessage": "chore: release v${version}",
+        "tagName": "v${version}",
+        "tagAnnotation": "Release v${version}",
+        "requireBranch": "main",
+        "requireCleanWorkingDir": true,
+        "requireUpstream": true
+    },
+    "npm": {
+        "publish": true,
+        "skipChecks": false
     },
     "github": {
-        "release": true
+        "release": true,
+        "autoGenerate": true,
+        "draft": false
+    },
+    "hooks": {
+        "before:init": ["bun run lint", "bun run typecheck"],
+        "after:bump": ["bun run build", "bun run lint:fix"]
     }
 }

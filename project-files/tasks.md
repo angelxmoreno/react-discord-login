@@ -139,10 +139,10 @@ This indicates good code maintenance practices, with no outstanding technical de
    - Developers cannot properly type their callback functions
    - Reduces TypeScript developer experience
 
-5. **Missing Input Validation**
-   - No validation for `clientId` format
-   - No URL validation for `redirectUri`
-   - No scope validation against Discord's allowed scopes
+5. ~~**Missing Input Validation**~~ ❌ **SKIPPED** 
+   - TypeScript provides sufficient validation
+   - Discord API rejects invalid parameters 
+   - Unnecessary complexity for a thin OAuth wrapper
 
 6. **Limited Error Context** (`src/useDiscordLogin.ts:40`)
    ```typescript
@@ -244,9 +244,8 @@ This indicates good code maintenance practices, with no outstanding technical de
 8. ✅ **Improved test assertion patterns** (PR feedback) - use expect().rejects.toThrow() over manual try/catch
 
 ### Phase 2: Robustness Improvements (Medium Impact) 
-1. Add input validation for required parameters
-2. Add comprehensive JSDoc documentation
-3. ⏭️ **Fix fetch mocking in CI** - resolve happy-dom interference (8 tests temporarily skipped)
+1. Add comprehensive JSDoc documentation
+2. ⏭️ **Fix fetch mocking in CI** - resolve happy-dom interference (8 tests temporarily skipped)
 
 ### Phase 3: Enhancement Features (Low Impact) - **GITHUB REQUESTED**
 1. **Popup OAuth flow** (Issue #9) - alternative to full page redirect
